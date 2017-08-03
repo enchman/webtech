@@ -8,61 +8,97 @@ namespace ServiceEngineCore
 {
     public abstract class DataContext
     {
-        public const int DefaultPort = 27001;
+        public IMongoDatabase Database { get; set; }
 
-        public string Host { get; set; }
-        public int Port { get; set; }
-        public bool IsSecure { get; set; }
-        public IMongoClient Client { get; private set; }
 
-        public DataContext() : this("localhost", DefaultPort, false)
-        { }
-        public DataContext(string host) : this(host, DefaultPort, false)
-        { }
-        public DataContext(string host, int port) : this(host, port, false)
-        { }
-        public DataContext(string host, int port, bool isSecure)
+
+        public DataContext(IMongoDatabase database)
         {
-            Host = host;
-            Port = port;
-            IsSecure = isSecure;
-            Connect();
+            Database = database;
         }
 
-        public void Connect()
-        {
-            if (Client == null)
-            {
-                Client = new MongoClient(new MongoClientSettings
-                {
-                    Server = new MongoServerAddress(Host, Port),
-                    UseSsl = IsSecure
-                });
-
-                LoadDatabases();
-            }
-        }
-
-        private void LoadDatabases()
+        private void Initialize()
         {
             var type = GetType();
             var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            foreach (var property in properties)
+
+            if (properties != null && properties.Length != 0)
             {
-                if(typeof(IMongoDatabase).IsAssignableFrom(property.PropertyType))
+                foreach (var property in properties)
                 {
-                    try
+                    if (typeof(IMongoCollection<>) == property.GetType().GetGenericTypeDefinition())
                     {
-                        var db = Client.GetDatabase(property.Name);
-                        if (db != null)
-                        {
-                            property.SetValue(this, db, null);
-                        }
+
                     }
-                    catch
-                    {}
                 }
             }
         }
     }
+
+    //public abstract class DataContext
+    //{
+    //    public const int DefaultPort = 0;
+
+    //    public string Host { get; set; }
+    //    public int Port { get; set; }
+    //    public bool IsSecure { get; set; }
+    //    public IMongoClient Client { get; private set; }
+    //    public List<IMongoDatabase> Databases { get; protected set; }
+
+    //    protected DataContext() : this("localhost", DefaultPort, false)
+    //    { }
+    //    protected DataContext(string host) : this(host, DefaultPort, false)
+    //    { }
+    //    protected DataContext(string host, int port) : this(host, port, false)
+    //    { }
+    //    protected DataContext(string host, int port, bool isSecure)
+    //    {
+    //        Host = host;
+    //        Port = port;
+    //        IsSecure = isSecure;
+    //    }
+
+    //    public void Connect(params string[] dbName)
+    //    {
+    //        Client = new MongoClient(new MongoClientSettings
+    //        {
+    //            Server = Port != 0 ? new MongoServerAddress(Host, Port) : new MongoServerAddress(Host),
+    //            UseSsl = IsSecure
+    //        });
+
+    //        LoadDatabases(dbName);
+    //    }
+
+    //    private void LoadCollections()
+    //    {
+
+    //    }
+
+    //    private void LoadDatabases(string[] dbNameList)
+    //    {
+    //        if (dbNameList != null && dbNameList.Length != 0)
+    //        {
+                
+    //        }
+
+    //        var type = GetType();
+    //        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+    //        foreach (var property in properties)
+    //        {
+    //            if(typeof(IMongoDatabase).IsAssignableFrom(property.PropertyType))
+    //            {
+    //                try
+    //                {
+    //                    var db = Client.GetDatabase(property.Name);
+    //                    if (db != null)
+    //                    {
+    //                        property.SetValue(this, db, null);
+    //                    }
+    //                }
+    //                catch
+    //                {}
+    //            }
+    //        }
+    //    }
+    //}
 }
